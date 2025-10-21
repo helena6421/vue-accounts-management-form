@@ -1,11 +1,19 @@
-<script setup lang="ts"></script>
-
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <q-layout view="hHh lpR fFf">
+    <q-page-container>
+      <q-page class="bg-grey-1">
+        <AccountForm />
+      </q-page>
+    </q-page-container>
+  </q-layout>
 </template>
 
-<style scoped></style>
+<script setup lang="ts">
+import AccountForm from './components/AccountForm.vue'
+</script>
+
+<style lang="scss" scoped>
+body {
+  background-color: $default-background;
+}
+</style>

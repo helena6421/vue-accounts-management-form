@@ -1,0 +1,65 @@
+@font-face {
+  font-family: Nunito;
+  src:
+    url('/assets/fonts/Nunito-ExtraLight.ttf') format('truetype'),
+    url('/assets/fonts/Nunito-ExtraLight.woff') format('woff');
+  font-weight: 100;
+}
+
+@font-face {
+  font-family: Nunito;
+  src:
+    url('/assets/fonts/Nunito-Regular.ttf') format('truetype'),
+    url('/assets/fonts/Nunito-Regular.woff') format('woff');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: Nunito;
+  src:
+    url('/assets/fonts/Nunito-ExtraBold.ttf') format('truetype'),
+    url('/assets/fonts/Nunito-ExtraBold.woff') format('woff');
+  font-weight: 700;
+}
+
+.bg-default {
+  background: $default-background !important;
+}
+
+.background-shit {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 792px;
+  border-radius: 20px;
+  background: linear-gradient(0deg, $default-background 0%, #ffffff00 10%), url('/assets/background-shit.png');
+  background-repeat: no-repeat;
+  background-size: 100%;
+
+  &::before {
+    content: '';
+    width: 120px;
+    height: 60px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: $default-background;
+    clip-path: path('M 0 0 V 60 Q 0 40 20 40 H 80 Q 100 40 100 20 V 20 Q 100 0 120 0 Z');
+  }
+}
+
+.direct-child-relative {
+  & > * {
+    position: relative;
+  }
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.blue-shadow {
+  box-shadow: 0px 8px 24px 0px #dfe9f3;
+}
