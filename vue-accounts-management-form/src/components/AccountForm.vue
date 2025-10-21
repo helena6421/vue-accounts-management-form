@@ -55,6 +55,7 @@
 
             <div class="col-12 col-sm-6">
               <q-input
+                clearable
                 v-model="account.login"
                 label="Логин *"
                 :maxlength="100"
@@ -66,14 +67,23 @@
 
             <div class="col-12" v-if="account.type === 'Локальная'">
               <q-input
+                clearable
                 v-model="account.password"
                 label="Пароль *"
-                type="password"
+                :type="isPasswordVisible ? 'text' : 'password'"
                 :maxlength="100"
                 :error="!validatePassword(account.password, account.type)"
                 error-message="Обязательное поле, максимум 100 символов"
                 @blur="updateAccount(account)"
-              />
+              >
+                <template v-slot:append>
+                  <q-icon
+                    :name="isPasswordVisible ? 'visibility' : 'visibility_off'"
+                    class="cursor-pointer"
+                    @click="isPasswordVisible = !isPasswordVisible"
+                  />
+                </template>
+              </q-input>
             </div>
           </div>
         </q-card-section>
@@ -86,8 +96,11 @@
 import { useAccountsStore } from '../stores/account'
 import { validateLogin, validatePassword, validateLabel } from '@/utils/validation'
 import type { Account } from '../types/account'
+import { ref } from 'vue'
 
 const accountsStore = useAccountsStore()
+
+const isPasswordVisible = ref(false)
 
 const accountTypes = [
   { label: 'Локальная', value: 'Локальная' },
