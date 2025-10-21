@@ -33,7 +33,8 @@
   width: 100%;
   height: 792px;
   border-radius: 20px;
-  background: linear-gradient(0deg, $default-background 0%, #ffffff00 10%), url('/assets/background-shit.png');
+  background:
+    linear-gradient(0deg, $default-background 0%, #ffffff00 10%), url('/assets/background-shit.png');
   background-repeat: no-repeat;
   background-size: 100%;
 
