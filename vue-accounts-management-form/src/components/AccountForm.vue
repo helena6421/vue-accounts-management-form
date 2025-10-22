@@ -32,14 +32,20 @@
           <div class="row q-col-gutter-md">
             <div class="col-12">
               <q-input
+                clearable
                 v-model="account.label"
                 label="Метки"
-                hint="Максимум 50 символов"
-                :maxlength="50"
-                :error="!validateLabel(account.label)"
+                :error="getValidationState(account.id)?.isLabelValid"
                 error-message="Максимум 50 символов"
                 @blur="updateAccount(account)"
-              />
+              >
+                <template v-slot:hint>
+                  Символов: {{ account.label?.length || 0 }}/50
+                  <span v-if="(account.label?.length || 0) > 50" class="text-negative">
+                    • Превышено на {{ (account.label?.length || 0) - 50 }} символов
+                  </span>
+                </template>
+              </q-input>
             </div>
 
             <div class="col-12 col-sm-6">
@@ -58,11 +64,17 @@
                 clearable
                 v-model="account.login"
                 label="Логин *"
-                :maxlength="100"
-                :error="!validateLogin(account.login)"
-                error-message="Обязательное поле, максимум 100 символов"
+                :error="getValidationState(account.id)?.isLoginValid"
+                error-message="Обязательное поле"
                 @blur="updateAccount(account)"
-              />
+              >
+                <template v-slot:hint>
+                  Символов: {{ account.login?.length || 0 }}/100
+                  <span v-if="(account.login?.length || 0) > 100" class="text-negative">
+                    • Превышено на {{ (account.login?.length || 0) - 100 }} символов
+                  </span>
+                </template>
+              </q-input>
             </div>
 
             <div class="col-12" v-if="account.type === 'Локальная'">
@@ -70,17 +82,22 @@
                 clearable
                 v-model="account.password"
                 label="Пароль *"
-                :type="isPasswordVisible ? 'text' : 'password'"
-                :maxlength="100"
-                :error="!validatePassword(account.password, account.type)"
-                error-message="Обязательное поле, максимум 100 символов"
+                :type="showPassword[account.id] ? 'text' : 'password'"
+                :error="getValidationState(account.id)?.isPasswordValid"
+                error-message="Обязательное поле"
                 @blur="updateAccount(account)"
               >
+                <template v-slot:hint>
+                  Символов: {{ account.password?.length || 0 }}/100
+                  <span v-if="(account.password?.length || 0) > 100" class="text-negative">
+                    • Превышено на {{ (account.password?.length || 0) - 100 }} символов
+                  </span>
+                </template>
                 <template v-slot:append>
                   <q-icon
-                    :name="isPasswordVisible ? 'visibility' : 'visibility_off'"
+                    :name="showPassword[account.id] ? 'visibility' : 'visibility_off'"
                     class="cursor-pointer"
-                    @click="isPasswordVisible = !isPasswordVisible"
+                    @click="showHidePassword(account.id)"
                   />
                 </template>
               </q-input>
@@ -93,35 +110,104 @@
 </template>
 
 <script setup lang="ts">
+import { reactive, onMounted, watch } from 'vue'
 import { useAccountsStore } from '../stores/account'
 import { validateLogin, validatePassword, validateLabel } from '@/utils/validation'
 import type { Account } from '../types/account'
-import { ref } from 'vue'
 
 const accountsStore = useAccountsStore()
 
-const isPasswordVisible = ref(false)
+interface ValidationState {
+  isLoginValid: boolean
+  isPasswordValid: boolean
+  isLabelValid: boolean
+  isTypeValid: boolean
+}
+
+const validationStates = reactive<Record<string, ValidationState>>({})
+
+const showPassword = reactive<Record<string, boolean>>({})
 
 const accountTypes = [
   { label: 'Локальная', value: 'Локальная' },
   { label: 'LDAP', value: 'LDAP' },
 ]
 
+const validateType = (type: string): boolean => {
+  return type === 'Локальная' || type === 'LDAP'
+}
+
+const getValidationState = (accountId: string): ValidationState => {
+  if (!validationStates[accountId]) {
+    validationStates[accountId] = {
+      isLoginValid: false,
+      isPasswordValid: false,
+      isLabelValid: false,
+      isTypeValid: false,
+    }
+  }
+  return validationStates[accountId]
+}
+
+const validateAllAccounts = () => {
+  accountsStore.accounts.forEach((account) => {
+    const validationState = getValidationState(account.id)
+
+    validationState.isLoginValid = !validateLogin(account.login)
+    validationState.isPasswordValid = !validatePassword(account.password, account.type)
+    validationState.isLabelValid = !validateLabel(account.label)
+    validationState.isTypeValid = !validateType(account.type)
+  })
+}
+
 const addNewAccount = () => {
-  accountsStore.addAccount()
+  const accountId = accountsStore.addAccount()
+  getValidationState(accountId)
 }
 
 const removeAccount = (id: string) => {
   accountsStore.removeAccount(id)
+  delete validationStates[id]
+  delete showPassword[id]
+}
+
+const showHidePassword = (accountId: string) => {
+  showPassword[accountId] = !showPassword[accountId]
 }
 
 const updateAccount = (account: Account) => {
-  const isLoginValid = validateLogin(account.login)
-  const isPasswordValid = validatePassword(account.password, account.type)
-  const isLabelValid = validateLabel(account.label)
+  const validationState = getValidationState(account.id)
 
-  if (isLoginValid && isPasswordValid && isLabelValid) {
-    accountsStore.updateAccount(account)
+  validationState.isLoginValid = !validateLogin(account.login)
+  validationState.isPasswordValid = !validatePassword(account.password, account.type)
+  validationState.isLabelValid = !validateLabel(account.label)
+  validationState.isTypeValid = !validateType(account.type)
+
+  const isLoginValid = validationState.isLoginValid === false
+  const isPasswordValid = validationState.isPasswordValid === false
+  const isTypeValid = validationState.isTypeValid === false
+  const isLabelValid = validationState.isLabelValid === false
+
+  if (account.type === 'Локальная') {
+    if (isLoginValid && isPasswordValid && isTypeValid && isLabelValid) {
+      accountsStore.updateAccount(account)
+    }
+  } else {
+    if (isLoginValid && isTypeValid && isLabelValid) {
+      accountsStore.updateAccount(account)
+    }
   }
 }
+
+onMounted(() => {
+  validateAllAccounts()
+})
+
+watch(
+  () => accountsStore.accounts,
+  () => {
+    validateAllAccounts()
+  },
+  { deep: true },
+)
 </script>
